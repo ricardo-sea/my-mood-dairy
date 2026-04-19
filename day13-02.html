@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>我的心情日记 - 完整版</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+      min-height: 100vh;
+      padding: 30px 20px;
+    }
+    .container { max-width: 800px; margin: 0 auto; }
+    .header { text-align: center; padding: 20px 0 30px; }
+    .header h1 { font-size: 2.2rem; color: #5d4037; margin-bottom: 8px; }
+    .header p { color: #8d6e63; font-size: 1rem; }
+    .stats-bar { display: flex; justify-content: center; gap: 20px; margin-top: 16px; flex-wrap: wrap; }
+    .stat-item { background: white; padding: 10px 20px; border-radius: 20px; font-size: 0.9rem; color: #5d4037; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .stat-item span { font-weight: bold; color: #e65100; }
+    .week-chart { background: white; border-radius: 14px; padding: 16px 20px; margin-top: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .week-chart-title { font-size: 0.9rem; color: #5d4037; margin-bottom: 12px; font-weight: 500; }
+    .week-chart-bars { display: flex; align-items: flex-end; justify-content: space-around; gap: 8px; height: 80px; }
+    .week-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; }
+    .week-bar { width: 100%; max-width: 36px; background: linear-gradient(to top, #ff8a65, #ffcc80); border-radius: 6px 6px 0 0; transition: all 0.4s ease; min-height: 4px; }
+    .week-bar-label { font-size: 0.75rem; color: #8d6e63; }
+    .week-bar-count { font-size: 0.7rem; color: #e65100; font-weight: bold; min-height: 14px; }
+    .write-card { background: white; border-radius: 16px; padding: 28px; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .write-card h2 { color: #5d4037; margin-bottom: 20px; font-size: 1.3rem; }
+    .form-row { margin-bottom: 18px; }
+    .form-label { display: block; margin-bottom: 8px; color: #6d4c41; font-size: 0.95rem; font-weight: 500; }
+    #dateInput { padding: 10px 14px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1rem; outline: none; transition: border-color 0.3s; font-family: inherit; }
+    #dateInput:focus { border-color: #ff8a65; }
+    .mood-options { display: flex; gap: 12px; flex-wrap: wrap; }
+    .mood-option { position: relative; }
+    .mood-option input { position: absolute; opacity: 0; }
+    .mood-option label { display: block; padding: 10px 16px; background: #f5f5f5; border-radius: 12px; cursor: pointer; font-size: 1.6rem; transition: all 0.3s; border: 2px solid transparent; user-select: none; }
+    .mood-option label:hover { background: #ffe0b2; transform: translateY(-2px); }
+    .mood-option input:checked + label { background: #ffcc80; border-color: #ff8a65; transform: scale(1.1); }
+    #diaryInput { width: 100%; padding: 14px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 1rem; font-family: inherit; outline: none; resize: vertical; min-height: 100px; transition: border-color 0.3s; }
+    #diaryInput:focus { border-color: #ff8a65; }
+    #diaryInput::placeholder { color: #bbb; }
+    .editing-banner { display: none; background: #fff3e0; border: 1px solid #ffcc80; border-radius: 10px; padding: 10px 16px; margin-bottom: 16px; color: #e65100; font-size: 0.9rem; }
+    .editing-banner.show { display: flex; align-items: center; justify-content: space-between; }
+    .cancel-edit { background: none; border: none; color: #e65100; cursor: pointer; font-size: 0.85rem; text-decoration: underline; }
+    .btn-group { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn-primary { padding: 12px 32px; background: linear-gradient(135deg, #ff8a65 0%, #ff7043 100%); color: white; border: none; border-radius: 25px; font-size: 1rem; cursor: pointer; transition: all 0.3s; font-weight: 500; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 112, 67, 0.4); }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-secondary { padding: 12px 24px; background: #f5f5f5; color: #666; border: none; border-radius: 25px; font-size: 1rem; cursor: pointer; transition: all 0.3s; }
+    .btn-secondary:hover { background: #e0e0e0; }
+    .filter-section { background: white; border-radius: 14px; padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .search-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .search-row span { color: #5d4037; font-size: 0.9rem; white-space: nowrap; }
+    #searchInput { flex: 1; padding: 8px 14px; border: 2px solid #e0e0e0; border-radius: 20px; font-size: 0.95rem; outline: none; transition: border-color 0.3s; font-family: inherit; }
+    #searchInput:focus { border-color: #ff8a65; }
+    .mood-filter-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .mood-filter-row span { color: #5d4037; font-size: 0.9rem; margin-right: 4px; }
+    .filter-btn { padding: 5px 12px; background: #f5f5f5; border: 2px solid transparent; border-radius: 20px; cursor: pointer; font-size: 1.1rem; transition: all 0.3s; }
+    .filter-btn:hover { background: #ffe0b2; }
+    .filter-btn.active { border-color: #ff8a65; background: #ffcc80; }
+    .diary-list { display: flex; flex-direction: column; gap: 16px; }
+    .diary-card { background: white; border-radius: 14px; padding: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); display: flex; gap: 16px; transition: all 0.3s; animation: slideUp 0.4s ease; cursor: pointer; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .diary-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .diary-card.removing { opacity: 0; transform: translateX(100px); }
+    .diary-mood { font-size: 2.5rem; flex-shrink: 0; display: flex; align-items: center; justify-content: center; width: 60px; }
+    .diary-content { flex: 1; }
+    .diary-date { font-size: 0.85rem; color: #999; margin-bottom: 6px; }
+    .diary-text { color: #444; line-height: 1.6; white-space: pre-wrap; }
+    .diary-actions { display: flex; flex-direction: column; gap: 6px; opacity: 0; transition: opacity 0.3s; }
+    .diary-card:hover .diary-actions { opacity: 1; }
+    .diary-actions button { padding: 5px 10px; border: none; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: all 0.3s; white-space: nowrap; }
+    .edit-btn { background: #e3f2fd; color: #1976d2; }
+    .edit-btn:hover { background: #1976d2; color: white; }
+    .delete-btn { background: #ffebee; color: #e53935; }
+    .delete-btn:hover { background: #e53935; color: white; }
+    .empty-state { text-align: center; padding: 60px 20px; color: #bcaaa4; }
+    .empty-state-icon { font-size: 4rem; margin-bottom: 16px; }
+    .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: #333; color: white; padding: 12px 28px; border-radius: 10px; font-size: 0.95rem; transition: transform 0.4s ease; z-index: 1000; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    @media (max-width: 600px) { .header h1 { font-size: 1.6rem; } .write-card { padding: 20px; } .mood-options { gap: 8px; } .mood-option label { font-size: 1.3rem; padding: 8px 12px; } .diary-mood { font-size: 2rem; width: 50px; } .diary-actions { opacity: 1; flex-direction: row; } .week-chart-bars { height: 60px; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📔 我的心情日记</h1>
+      <p>记录每一天的喜怒哀乐</p>
+      <div class="stats-bar">
+        <div class="stat-item">共写了 <span id="totalCount">0</span> 篇</div>
+        <div class="stat-item">今天 <span id="todayCount">0</span> 篇</div>
+      </div>
+      <div class="week-chart">
+        <div class="week-chart-title">📊 近7天日记统计</div>
+        <div class="week-chart-bars" id="weekChartBars"></div>
+      </div>
+    </div>
+
+    <div class="write-card">
+      <h2 id="formTitle">✏️ 写今日日记</h2>
+      <div class="editing-banner" id="editingBanner">
+        <span>✏️ 正在编辑日记，点击下方保存以更新</span>
+        <button class="cancel-edit" id="cancelEdit">取消编辑</button>
+      </div>
+      <div class="form-row">
+        <label class="form-label">日期</label>
+        <input type="date" id="dateInput">
+      </div>
+      <div class="form-row">
+        <label class="form-label">今天心情如何？</label>
+        <div class="mood-options">
+          <div class="mood-option"><input type="radio" name="mood" id="mood-happy" value="😊" checked><label for="mood-happy">😊</label></div>
+          <div class="mood-option"><input type="radio" name="mood" id="mood-excited" value="🤩"><label for="mood-excited">🤩</label></div>
+          <div class="mood-option"><input type="radio" name="mood" id="mood-calm" value="😌"><label for="mood-calm">😌</label></div>
+          <div class="mood-option"><input type="radio" name="mood" id="mood-tired" value="😴"><label for="mood-tired">😴</label></div>
+          <div class="mood-option"><input type="radio" name="mood" id="mood-sad" value="😢"><label for="mood-sad">😢</label></div>
+          <div class="mood-option"><input type="radio" name="mood" id="mood-angry" value="😡"><label for="mood-angry">😡</label></div>
+          <div class="mood-option"><input type="radio" name="mood" id="mood-anxious" value="😰"><label for="mood-anxious">😰</label></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <label class="form-label">想记录些什么？</label>
+        <textarea id="diaryInput" placeholder="今天发生了什么？写下你的想法..."></textarea>
+      </div>
+      <div class="btn-group">
+        <button class="btn-primary" id="saveBtn">💾 保存日记</button>
+        <button class="btn-secondary" id="resetBtn" style="display:none;">❌ 清空表单</button>
+      </div>
+    </div>
+
+    <div class="filter-section">
+      <div class="search-row">
+        <span>🔍 搜索：</span>
+        <input type="text" id="searchInput" placeholder="输入关键词搜索日记内容...">
+      </div>
+      <div class="mood-filter-row">
+        <span>心情筛选：</span>
+        <button class="filter-btn active" data-filter="all">全部</button>
+        <button class="filter-btn" data-filter="😊">😊</button>
+        <button class="filter-btn" data-filter="🤩">🤩</button>
+        <button class="filter-btn" data-filter="😌">😌</button>
+        <button class="filter-btn" data-filter="😴">😴</button>
+        <button class="filter-btn" data-filter="😢">😢</button>
+        <button class="filter-btn" data-filter="😡">😡</button>
+        <button class="filter-btn" data-filter="😰">😰</button>
+      </div>
+    </div>
+
+    <div class="diary-list" id="diaryList">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-state-icon">📝</div>
+        <p>还没有日记，写下第一篇吧！</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    var STORAGE_KEY = 'mood-diary-data';
+    var diaries = [];
+    var currentFilter = 'all';
+    var searchKeyword = '';
+    var editingId = null;
+
+    var dateInput = document.querySelector('#dateInput');
+    var diaryInput = document.querySelector('#diaryInput');
+    var saveBtn = document.querySelector('#saveBtn');
+    var resetBtn = document.querySelector('#resetBtn');
+    var diaryList = document.querySelector('#diaryList');
+    var emptyState = document.querySelector('#emptyState');
+    var totalCount = document.querySelector('#totalCount');
+    var todayCount = document.querySelector('#todayCount');
+    var toast = document.querySelector('#toast');
+    var filterBtns = document.querySelectorAll('.filter-btn');
+    var searchInput = document.querySelector('#searchInput');
+    var formTitle = document.querySelector('#formTitle');
+    var editingBanner = document.querySelector('#editingBanner');
+    var cancelEdit = document.querySelector('#cancelEdit');
+    var weekChartBars = document.querySelector('#weekChartBars');
+
+    var today = new Date();
+    var yyyy = today.getFullYear();
+    var mm = String(today.getMonth() + 1).padStart(2, '0');
+    var dd = String(today.getDate()).padStart(2, '0');
+    dateInput.value = yyyy + '-' + mm + '-' + dd;
+
+    function saveToStorage() { localStorage.setItem(STORAGE_KEY, JSON.stringify(diaries)); }
+    function loadFromStorage() { try { var data = localStorage.getItem(STORAGE_KEY); if (data) diaries = JSON.parse(data); } catch (e) { console.error('读取失败:', e); } }
+
+    var toastTimer;
+    function showToast(msg) { toast.textContent = msg; toast.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(function() { toast.classList.remove('show'); }, 2000); }
+
+    function getSelectedMood() { var selected = document.querySelector('input[name="mood"]:checked'); return selected ? selected.value : '😊'; }
+    function setSelectedMood(mood) { var radios = document.querySelectorAll('input[name="mood"]'); radios.forEach(function(radio) { radio.checked = (radio.value === mood); }); }
+
+    function startEdit(id) {
+      var diary = diaries.find(function(d) { return d.id === id; });
+      if (!diary) return;
+      dateInput.value = diary.date;
+      setSelectedMood(diary.mood);
+      diaryInput.value = diary.text;
+      editingId = id;
+      formTitle.textContent = '✏️ 编辑日记';
+      saveBtn.textContent = '💾 更新日记';
+      editingBanner.classList.add('show');
+      resetBtn.style.display = 'inline-block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      showToast('已进入编辑模式');
+    }
+
+    function cancelEditing() {
+      editingId = null;
+      formTitle.textContent = '✏️ 写今日日记';
+      saveBtn.textContent = '💾 保存日记';
+      editingBanner.classList.remove('show');
+      resetBtn.style.display = 'none';
+      diaryInput.value = '';
+      setSelectedMood('😊');
+      var now = new Date();
+      dateInput.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    }
+
+    function saveDiary() {
+      var date = dateInput.value;
+      var text = diaryInput.value.trim();
+      var mood = getSelectedMood();
+      if (!date) { showToast('请选择日期'); return; }
+      if (!text) { showToast('请写点什么吧'); diaryInput.focus(); return; }
+
+      if (editingId) {
+        var diary = diaries.find(function(d) { return d.id === editingId; });
+        if (diary) { diary.date = date; diary.mood = mood; diary.text = text; diary.updatedAt = new Date().toISOString(); }
+        saveToStorage(); render(); showToast('日记更新成功！'); cancelEditing();
+      } else {
+        var diary = { id: Date.now(), date: date, mood: mood, text: text, createdAt: new Date().toISOString() };
+        diaries.unshift(diary);
+        diaryInput.value = '';
+        saveToStorage(); render(); showToast('日记保存成功！');
+      }
+    }
+
+    function deleteDiary(id, element) {
+      element.classList.add('removing');
+      setTimeout(function() { diaries = diaries.filter(function(d) { return d.id !== id; }); saveToStorage(); render(); showToast('已删除'); }, 300);
+    }
+
+     // ==========================================
+    // DOM 构建：创建单个日记卡片
+    // ==========================================
+    /**
+     * 根据日记对象创建对应的 HTML 卡片元素
+     * @param {Object} diary - 日记数据对象 { id, date, mood, text, ... }
+     * @returns {HTMLElement} 构建完成的 div.diary-card 元素
+     */
+    function createDiaryCard(diary) {
+      // 1. 创建卡片外层容器
+      var card = document.createElement('div'); 
+      card.className = 'diary-card';
+
+      // 2. 创建心情图标区域
+      var moodDiv = document.createElement('div'); 
+      moodDiv.className = 'diary-mood'; 
+      moodDiv.textContent = diary.mood; // 显示 Emoji 表情
+
+      // 3. 创建内容区域（包含日期和正文）
+      var contentDiv = document.createElement('div'); 
+      contentDiv.className = 'diary-content';
+
+      // 3.1 格式化并显示日期 (例如: 2023年10月01日)
+      var dateDiv = document.createElement('div'); 
+      dateDiv.className = 'diary-date'; 
+      // 使用 split('-') 将 "YYYY-MM-DD" 拆分并重组为中文格式
+      dateDiv.textContent = diary.date.split('-')[0] + '年' + diary.date.split('-')[1] + '月' + diary.date.split('-')[2] + '日';
+
+      // 3.2 显示日记正文
+      var textDiv = document.createElement('div'); 
+      textDiv.className = 'diary-text'; 
+      textDiv.textContent = diary.text; // textContent 会自动转义 HTML，防止 XSS 攻击
+
+      // 将日期和正文放入内容容器
+      contentDiv.appendChild(dateDiv); 
+      contentDiv.appendChild(textDiv);
+
+      // 4. 创建操作按钮区域（编辑/删除）
+      var actionsDiv = document.createElement('div'); 
+      actionsDiv.className = 'diary-actions';
+
+      // 4.1 编辑按钮
+      var editButton = document.createElement('button'); 
+      editButton.className = 'edit-btn'; 
+      editButton.textContent = '编辑';
+      // 绑定点击事件：进入编辑模式
+      // e.stopPropagation() 防止事件冒泡触发卡片本身可能存在的点击事件
+      editButton.addEventListener('click', function(e) { 
+        e.stopPropagation(); 
+        startEdit(diary.id); 
+      });
+
+      // 4.2 删除按钮
+      var deleteButton = document.createElement('button'); 
+      deleteButton.className = 'delete-btn'; 
+      deleteButton.textContent = '删除';
+      // 绑定点击事件：删除当前日记
+      // 注意：这里将 card 元素传入 deleteDiary，以便执行删除动画
+      deleteButton.addEventListener('click', function(e) { 
+        e.stopPropagation(); 
+        deleteDiary(diary.id, card); 
+      });
+
+      // 将按钮放入操作容器
+      actionsDiv.appendChild(editButton); 
+      actionsDiv.appendChild(deleteButton);
+
+      // 5. 组装整个卡片结构
+      // 结构: card > [moodDiv, contentDiv, actionsDiv]
+      card.appendChild(moodDiv); 
+      card.appendChild(contentDiv); 
+      card.appendChild(actionsDiv);
+
+      // 6. 返回构建好的 DOM 元素，供 render 函数插入页面
+      return card;
+    }
+    function getWeekdayName(date) { var names = ['周日','周一','周二','周三','周四','周五','周六']; return names[date.getDay()]; }
+    function formatYMD(date) { return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0'); }
+
+    function updateWeekChart() {
+      weekChartBars.innerHTML = '';
+      var maxCount = 0; var days = [];
+      for (var i = 6; i >= 0; i--) {
+        var d = new Date(); d.setDate(d.getDate() - i);
+        var dateStr = formatYMD(d);
+        var count = diaries.filter(function(diary) { return diary.date === dateStr; }).length;
+        if (count > maxCount) maxCount = count;
+        days.push({ dateStr: dateStr, count: count, label: i === 0 ? '今天' : getWeekdayName(d) });
+      }
+      days.forEach(function(day) {
+        var wrap = document.createElement('div'); wrap.className = 'week-bar-wrap';
+        var countLabel = document.createElement('div'); countLabel.className = 'week-bar-count'; countLabel.textContent = day.count > 0 ? day.count : '';
+        var bar = document.createElement('div'); bar.className = 'week-bar';
+        var heightPercent = maxCount > 0 ? (day.count / maxCount) * 100 : 0;
+        if (day.count > 0 && heightPercent < 10) heightPercent = 10;
+        bar.style.height = heightPercent + '%';
+        var label = document.createElement('div'); label.className = 'week-bar-label'; label.textContent = day.label;
+        wrap.appendChild(countLabel); wrap.appendChild(bar); wrap.appendChild(label);
+        weekChartBars.appendChild(wrap);
+      });
+    }
+
+    function updateStats() { totalCount.textContent = diaries.length; var count = diaries.filter(function(d) { return d.date === dateInput.value; }).length; todayCount.textContent = count; updateWeekChart(); }
+
+    function render() {
+      var filtered = diaries;
+      if (currentFilter !== 'all') filtered = filtered.filter(function(d) { return d.mood === currentFilter; });
+      if (searchKeyword.trim()) { var keyword = searchKeyword.trim().toLowerCase(); filtered = filtered.filter(function(d) { return d.text.toLowerCase().includes(keyword); }); }
+      diaryList.innerHTML = '';
+      if (filtered.length === 0) {
+        diaryList.appendChild(emptyState); emptyState.style.display = 'block';
+        emptyState.querySelector('p').textContent = searchKeyword.trim() ? '没有找到匹配的日记~' : (currentFilter !== 'all' ? '这个心情下还没有日记~' : '还没有日记，写下第一篇吧！');
+      } else {
+        emptyState.style.display = 'none';
+        filtered.forEach(function(diary) { diaryList.appendChild(createDiaryCard(diary)); });
+      }
+      updateStats();
+    }
+
+    filterBtns.forEach(function(btn) { btn.addEventListener('click', function() { filterBtns.forEach(function(b) { b.classList.remove('active'); }); btn.classList.add('active'); currentFilter = btn.dataset.filter; render(); }); });
+    searchInput.addEventListener('input', function() { searchKeyword = searchInput.value; render(); });
+    saveBtn.addEventListener('click', saveDiary);
+    diaryInput.addEventListener('keydown', function(e) { if (e.key === 'Enter' && e.ctrlKey) saveDiary(); });
+    cancelEdit.addEventListener('click', cancelEditing);
+    resetBtn.addEventListener('click', function() { if (editingId) cancelEditing(); else diaryInput.value = ''; });
+    loadFromStorage(); render();
+  </script>
+</body>
+</html>
